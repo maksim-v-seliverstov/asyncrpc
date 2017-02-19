@@ -9,7 +9,7 @@ from asyncrpc.call import call_method, RequestsStorage
 
 class UniCastServer:
 
-    def __init__(self, obj, ip_addrs, port, storage=RequestsStorage(), loop=None):
+    def __init__(self, obj, ip_addrs, port, storage=RequestsStorage(), patch='/post', loop=None):
         self.ip_addrs = ip_addrs
         self.port = port
 
@@ -20,7 +20,7 @@ class UniCastServer:
 
         self.app = web.Application()
         self.app.router.add_route(
-            'POST', '/post', partial(call_method, obj, storage, self.methods)
+            'POST', patch, partial(call_method, obj, storage, self.methods)
         )
 
         self.servers = dict()

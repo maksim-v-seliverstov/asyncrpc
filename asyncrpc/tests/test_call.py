@@ -22,7 +22,7 @@ class TestJSONRPCCallMethod(unittest.TestCase):
         request = create_request('echo', msg=msg)
 
         respond = self.loop.run_until_complete(
-            call_method(Test(), RequestsStorage(), ['echo'], request)
+            call_method(Test(), RequestsStorage(), dict(echo=Test.echo), request)
         )
 
         self.assertIn('jsonrpc', respond.body)
@@ -36,7 +36,7 @@ class TestJSONRPCCallMethod(unittest.TestCase):
         request = create_request('error')
 
         respond = self.loop.run_until_complete(
-            call_method(Test(), RequestsStorage(), ['error'], request)
+            call_method(Test(), RequestsStorage(), dict(error=Test.error), request)
         )
 
         self.assertIn('jsonrpc', respond.body)
@@ -49,7 +49,7 @@ class TestJSONRPCCallMethod(unittest.TestCase):
         request = create_request('not_exist')
 
         respond = self.loop.run_until_complete(
-            call_method(Test(), RequestsStorage(), [], request)
+            call_method(Test(), RequestsStorage(), dict(), request)
         )
 
         self.assertIn('jsonrpc', respond.body)

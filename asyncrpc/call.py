@@ -1,5 +1,6 @@
 import json
 import uuid
+import inspect
 import aiohttp
 import asyncio
 import traceback
@@ -89,10 +90,17 @@ def call_method(obj, storage, methods, request):
 
         method = getattr(obj, request['method'])
 
-        if isinstance(request['params'], dict):
-            result = yield from method(**request['params'])
+        if inspect.isgeneratorfunction(methods[request['method']]):
+            if isinstance(request['params'], dict):
+                result = yield from method(**request['params'])
+            else:
+                result = yield from method(*request['params'])
         else:
-            result = yield from method(*request['params'])
+            if isinstance(request['params'], dict):
+                result = method(**request['params'])
+            else:
+                result = method(*request['params'])
+
         respond = dict(
             jsonrpc='2.0',
             result=result,

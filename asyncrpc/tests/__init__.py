@@ -23,6 +23,9 @@ class Test:
     def get_count(self):
         return self.count
 
+    def func(self, msg):
+        return msg
+
 
 def create_request(method, *args, **kwargs):
     class Request:

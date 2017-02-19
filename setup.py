@@ -10,5 +10,6 @@ setup(
     author_email='Maksim.V.Seliverstov@yandex.ru',
     packages=find_packages(),
     zip_safe=False,
-    keywords=['rpc', 'jsonrpc', 'aiorpc', 'asyncrpc', 'multiple interfaces rpc']
+    keywords=['rpc', 'jsonrpc', 'aiorpc', 'asyncrpc', 'multiple interfaces rpc'],
+    install_requires=['aiohttp']
 )

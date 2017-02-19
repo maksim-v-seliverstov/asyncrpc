@@ -42,3 +42,8 @@ class TestUniCastServer(unittest.TestCase):
     def test_exception(self):
         with self.assertRaises(RPCMethodException):
             self.loop.run_until_complete(self.client.error())
+
+    def test_func(self):
+        msg = str(uuid.uuid1())
+        result = self.loop.run_until_complete(self.client.func(msg))
+        self.assertEquals(result, msg)

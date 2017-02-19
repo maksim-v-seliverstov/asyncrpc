@@ -127,8 +127,9 @@ def wait_first_completed(futures):
             futures = list(pending)
         else:
             try:
+                if error_info is not None:
+                    raise RPCMethodException(error_info)
                 done.pop().result()  # raise exception
-                raise RPCMethodException(error_info)
             except ClientOSError:
                 raise RequestError()
 
@@ -137,7 +138,7 @@ def wait_first_completed(futures):
 
 def session_decorator(func):
     @asyncio.coroutine
-    def session_post(self, data, patch='post', headers=None):
+    def session_post(self, data, headers=None):
         futures = list()
 
         yield from self.try_clear()
@@ -152,7 +153,7 @@ def session_decorator(func):
             futures.append(
                 func(
                     self,
-                    url='{}/{}'.format(self.url_mask.format(ip_addr, port), patch),
+                    url='{}/{}'.format(self.url_mask.format(ip_addr, port), self.patch),
                     session=self.sessions[-1],
                     data=data,
                     headers=headers
@@ -182,8 +183,9 @@ def session_decorator(func):
 class UniCastClient(ContextManagerMixin):
     _closing = False
 
-    def __init__(self, interfaces_info, limit=20, loop=None, url_mask=None, **kwargs):
+    def __init__(self, interfaces_info, patch='post', limit=20, loop=None, url_mask=None, **kwargs):
         self.interfaces_info = interfaces_info
+        self.patch = patch
 
         self.limit = limit
 
