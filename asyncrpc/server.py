@@ -4,7 +4,7 @@ from functools import partial
 
 from aiohttp import web
 
-from aiojsonrpc.call import call_method, RequestsStorage
+from asyncrpc.call import call_method, RequestsStorage
 
 
 class UniCastServer:

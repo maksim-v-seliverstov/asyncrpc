@@ -6,7 +6,7 @@ from collections import deque
 import aiohttp
 from aiohttp.errors import ClientOSError
 
-from aiojsonrpc.call import create_request, deserialize
+from asyncrpc.call import create_request, deserialize
 
 
 PY_35 = sys.version_info >= (3, 5)

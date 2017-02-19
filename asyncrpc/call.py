@@ -5,7 +5,7 @@ import asyncio
 import traceback
 from collections import OrderedDict
 
-from aiojsonrpc.cleaner import Cleaner
+from asyncrpc.cleaner import Cleaner
 
 
 def create_request(method, *args, **kwargs):

@@ -2,9 +2,9 @@ import uuid
 import asyncio
 import unittest
 
-from aiojsonrpc.tests import Test
-from aiojsonrpc.server import UniCastServer
-from aiojsonrpc.client import UniCastClient, RPCMethodException
+from asyncrpc.tests import Test
+from asyncrpc.server import UniCastServer
+from asyncrpc.client import UniCastClient, RPCMethodException
 
 
 class TestUniCastServer(unittest.TestCase):

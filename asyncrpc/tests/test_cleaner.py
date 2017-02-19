@@ -1,6 +1,6 @@
 import unittest
 
-from aiojsonrpc.cleaner import Cleaner
+from asyncrpc.cleaner import Cleaner
 
 
 class TestMultiCast(unittest.TestCase):

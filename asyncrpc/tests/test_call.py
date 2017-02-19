@@ -3,8 +3,8 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
-from aiojsonrpc.tests import Test, create_request
-from aiojsonrpc.call import call_method, RequestsStorage, deserialize
+from asyncrpc.tests import Test, create_request
+from asyncrpc.call import call_method, RequestsStorage, deserialize
 
 
 class Response:
