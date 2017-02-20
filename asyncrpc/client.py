@@ -96,6 +96,8 @@ class RPCMethodException(Exception):
 def wait_first_completed(futures):
     flag_completed = False
 
+    response = tuple()
+
     timeout = 30
     while not flag_completed:
         done, pending = (yield from asyncio.wait(futures, return_when=asyncio.FIRST_COMPLETED, timeout=timeout))
@@ -109,6 +111,7 @@ def wait_first_completed(futures):
         for f in done:
             try:
                 result, status, headers = f.result()
+                response = result, status, headers
                 if status != 200:
                     if status == 500:
                         error_info = result
@@ -130,6 +133,7 @@ def wait_first_completed(futures):
                 if error_info is not None:
                     raise RPCMethodException(error_info)
                 done.pop().result()  # raise exception
+                return response + (pending,)
             except ClientOSError:
                 raise RequestError()
 
@@ -138,7 +142,7 @@ def wait_first_completed(futures):
 
 def session_decorator(func):
     @asyncio.coroutine
-    def session_post(self, data, headers=None):
+    def session_post(self, data=None, headers=None, patch=None):
         futures = list()
 
         yield from self.try_clear()
@@ -153,7 +157,7 @@ def session_decorator(func):
             futures.append(
                 func(
                     self,
-                    url='{}/{}'.format(self.url_mask.format(ip_addr, port), self.patch),
+                    url='{}/{}'.format(self.url_mask.format(ip_addr, port), patch or self.patch),
                     session=self.sessions[-1],
                     data=data,
                     headers=headers
@@ -176,7 +180,7 @@ def session_decorator(func):
         for f in pending:
             f.cancel()
 
-        return result
+        return result, status, headers
     return session_post
 
 
@@ -207,9 +211,9 @@ class UniCastClient(ContextManagerMixin):
     @asyncio.coroutine
     def _async_call(self, method_name, *args, **kwargs):
         request = create_request(method_name, *args, **kwargs)
-        data = yield from self.session_post(data=request)
+        data, _, _ = yield from self.session_post(data=request)
         response = deserialize(data)
-        if 'error' in response and response['error'] is not None:
+        if 'error' in response:
             raise RPCMethodException(response['error'])
         return response['result']
 
@@ -228,19 +232,19 @@ class UniCastClient(ContextManagerMixin):
     @session_decorator
     def session_post(self, url, session, data, headers):
         return (
-            yield from self.request(session.post(url, data=data, headers=headers))
+            yield from self.request(session.post(url=url, data=data, headers=headers))
         )
 
     @session_decorator
     def session_delete(self, url, session, *args, **kwargs):
         return (
-            yield from self.request(session.delete(url))
+            yield from self.request(session.delete(url=url))
         )
 
     @session_decorator
     def session_get(self, url, session, headers, *args, **kwargs):
         return (
-            yield from self.request(session.get(url, headers=headers))
+            yield from self.request(session.get(url=url, headers=headers))
         )
 
     @asyncio.coroutine

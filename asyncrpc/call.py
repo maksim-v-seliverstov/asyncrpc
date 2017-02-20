@@ -9,15 +9,17 @@ from collections import OrderedDict
 from asyncrpc.cleaner import Cleaner
 
 
+def _create_request(method, *args, **kwargs):
+    return dict(
+        jsonrpc='2.0',
+        method=method,
+        params=args or kwargs,
+        id=str(uuid.uuid1())
+    )
+
+
 def create_request(method, *args, **kwargs):
-    return json.dumps(
-        dict(
-            jsonrpc='2.0',
-            method=method,
-            params=args or kwargs,
-            id=str(uuid.uuid1())
-        )
-    ).encode()
+    return serialize(_create_request(method, *args, **kwargs))
 
 
 class RequestsStorage(Cleaner):
@@ -58,24 +60,20 @@ def deserialize(data):
     return json.loads(data.decode())
 
 
-@asyncio.coroutine
-def call_method(obj, storage, methods, request):
+def isinteger(value):
     try:
-        storage.try_clear()
+        int(value)
+        return True
+    except ValueError:
+        return False
 
-        data = yield from request.read()
-        request = deserialize(data)
 
+@asyncio.coroutine
+def _call_method(obj, storage, methods, request):
+    try:
         with (yield from storage.lock):
             flag_called = storage.is_called(request['id'])
             storage.set_result(request['id'])
-
-        def isinteger(value):
-            try:
-                int(value)
-                return True
-            except ValueError:
-                return False
 
         if not isinteger(request['id']) and flag_called:
             yield from storage.wait(request['id'])
@@ -84,7 +82,7 @@ def call_method(obj, storage, methods, request):
                 error='Method {} was already called'.format(request['method']),
                 id=request['id']
             )
-            return aiohttp.web.Response(body=serialize(respond), status=202)
+            return respond, 202
 
         if request['method'] not in methods:
             respond = dict(
@@ -93,7 +91,7 @@ def call_method(obj, storage, methods, request):
                 id=request['id']
             )
             storage.set(request['id'])
-            return aiohttp.web.Response(body=serialize(respond), status=405)
+            return respond, 405
 
         method = getattr(obj, request['method'])
 
@@ -114,7 +112,7 @@ def call_method(obj, storage, methods, request):
             id=request['id']
         )
         storage.set(request['id'])
-        return aiohttp.web.Response(body=serialize(respond))
+        return respond, 200
     except:
         respond = dict(
             jsonrpc='2.0',
@@ -122,4 +120,11 @@ def call_method(obj, storage, methods, request):
             id=request['id']
         )
         storage.set(request['id'])
-        return aiohttp.web.Response(body=serialize(respond), status=500)
+        return respond, 500
+
+@asyncio.coroutine
+def call_method(obj, storage, methods, request):
+    storage.try_clear()
+    data = yield from request.read()
+    response, status = yield from _call_method(obj, storage, methods, deserialize(data))
+    return aiohttp.web.Response(body=serialize(response), status=status)
