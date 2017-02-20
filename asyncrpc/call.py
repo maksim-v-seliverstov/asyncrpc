@@ -70,7 +70,14 @@ def call_method(obj, storage, methods, request):
             flag_called = storage.is_called(request['id'])
             storage.set_result(request['id'])
 
-        if flag_called:
+        def isinteger(value):
+            try:
+                int(value)
+                return True
+            except ValueError:
+                return False
+
+        if not isinteger(request['id']) and flag_called:
             yield from storage.wait(request['id'])
             respond = dict(
                 jsonrpc='2.0',

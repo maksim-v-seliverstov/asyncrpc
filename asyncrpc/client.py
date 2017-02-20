@@ -209,7 +209,7 @@ class UniCastClient(ContextManagerMixin):
         request = create_request(method_name, *args, **kwargs)
         data = yield from self.session_post(data=request)
         response = deserialize(data)
-        if 'error' in response:
+        if 'error' in response and response['error'] is not None:
             raise RPCMethodException(response['error'])
         return response['result']
 
