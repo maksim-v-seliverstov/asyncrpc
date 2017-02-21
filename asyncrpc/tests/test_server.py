@@ -1,3 +1,4 @@
+import os
 import uuid
 import asyncio
 import unittest
@@ -18,7 +19,7 @@ class TestUniCastServer(unittest.TestCase):
         self.srvc = UniCastServer(
             obj=Test(),
             ip_addrs=ip_addrs,
-            port=port,
+            port=port
         )
         self.srvc.delay = 0.1
         self.loop.run_until_complete(self.srvc.start())
@@ -47,3 +48,28 @@ class TestUniCastServer(unittest.TestCase):
         msg = str(uuid.uuid1())
         result = self.loop.run_until_complete(self.client.func(msg))
         self.assertEquals(result, msg)
+
+
+class TestUniCastServerWithSSLAuth(TestUniCastServer):
+
+    def setUp(self):
+        ssl_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'ssl')
+        port = 9000
+        self.interfaces_info = [('127.0.0.1', port), ('127.0.0.2', port)]
+        ip_addrs = [ip_addr for ip_addr, _ in self.interfaces_info]
+        self.srvc = UniCastServer(
+            obj=Test(),
+            ip_addrs=ip_addrs,
+            port=port,
+            cafile=os.path.join(ssl_path, 'ca.crt'),
+            certfile=os.path.join(ssl_path, 'crt', 'server.crt'),
+            keyfile=os.path.join(ssl_path, 'key', 'server.key')
+        )
+        self.srvc.delay = 0.1
+        self.loop.run_until_complete(self.srvc.start())
+
+        self.client = UniCastClient(
+            interfaces_info=self.interfaces_info,
+            certfile=os.path.join(ssl_path, 'crt', 'client01.crt'),
+            keyfile=os.path.join(ssl_path, 'key', 'client01.key')
+        )

@@ -1,3 +1,4 @@
+import ssl
 import inspect
 import asyncio
 from functools import partial
@@ -9,7 +10,8 @@ from asyncrpc.call import call_method, RequestsStorage
 
 class UniCastServer:
 
-    def __init__(self, obj, ip_addrs, port, storage=RequestsStorage(), patch='/post', loop=None):
+    def __init__(self, obj, ip_addrs, port, storage=RequestsStorage(), patch='/post', loop=None,
+                 cafile=None, certfile=None, keyfile=None):
         self.ip_addrs = ip_addrs
         self.port = port
 
@@ -28,6 +30,13 @@ class UniCastServer:
         self.delay = 5
         self.flag_continue = True
         self.update_task = None
+
+        self.ssl_context = None
+        if cafile and certfile and keyfile:
+            self.ssl_context = ssl.create_default_context(cafile=cafile)
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_REQUIRED
+            self.ssl_context.load_cert_chain(certfile=certfile, keyfile=keyfile)
 
     @asyncio.coroutine
     def start(self):
@@ -48,7 +57,8 @@ class UniCastServer:
     def create_server(self, ip_addr, port):
         try:
             srv = yield from self.loop.create_server(
-                self.app.make_handler(), ip_addr, port
+                self.app.make_handler(), ip_addr, port,
+                ssl=self.ssl_context
             )
             self.servers[self._get_id(ip_addr, srv.sockets[0].getsockname()[1])] = srv
         except OSError:

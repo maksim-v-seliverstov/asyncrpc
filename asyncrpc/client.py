@@ -1,4 +1,5 @@
 import sys
+import ssl
 import time
 import asyncio
 from collections import deque
@@ -187,7 +188,8 @@ def session_decorator(func):
 class UniCastClient(ContextManagerMixin):
     _closing = False
 
-    def __init__(self, interfaces_info, patch='post', limit=20, loop=None, url_mask=None, **kwargs):
+    def __init__(self, interfaces_info, patch='post', limit=20, loop=None, url_mask=None,
+                 certfile=None, keyfile=None, **kwargs):
         self.interfaces_info = interfaces_info
         self.patch = patch
 
@@ -204,6 +206,12 @@ class UniCastClient(ContextManagerMixin):
         self.monitoring_timeout = 5
 
         self._req_counter = LockCounter()
+
+        self.ssl_context = None
+        if certfile and keyfile:
+            self.ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            self.ssl_context.load_cert_chain(certfile=certfile, keyfile=keyfile)
+            self.url_mask = url_mask or 'https://{}:{}'
 
     def __getattr__(self, name):
         return lambda *args, **kwargs: self._async_call(name, *args, **kwargs)
