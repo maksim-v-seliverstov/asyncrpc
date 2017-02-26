@@ -5,6 +5,7 @@ from functools import partial
 
 from aiohttp import web
 
+from asyncrpc.utils import get_lst
 from asyncrpc.call import call_method, RequestsStorage
 
 
@@ -12,7 +13,7 @@ class UniCastServer:
 
     def __init__(self, obj, ip_addrs, port, storage=RequestsStorage(), patch='/post', loop=None,
                  cafile=None, certfile=None, keyfile=None):
-        self.ip_addrs = ip_addrs
+        self.ip_addrs = get_lst(ip_addrs)
         self.port = port
 
         cls = type(obj)
