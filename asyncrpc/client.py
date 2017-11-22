@@ -5,7 +5,7 @@ import asyncio
 from collections import deque
 
 import aiohttp
-from aiohttp.errors import ClientOSError
+from aiohttp import ClientOSError
 
 from asyncrpc.call import create_request, deserialize
 
@@ -99,14 +99,9 @@ def wait_first_completed(futures):
 
     response = tuple()
 
-    timeout = 30
+    timeout = 5
     while not flag_completed:
         done, pending = (yield from asyncio.wait(futures, return_when=asyncio.FIRST_COMPLETED, timeout=timeout))
-
-        if not done:
-            for f in pending:
-                f.cancel()
-            raise RequestError()
 
         error_info = None
         for f in done:
@@ -122,7 +117,7 @@ def wait_first_completed(futures):
             except:
                 pass
 
-        timeout = 15
+        timeout /= 2
 
         if flag_completed:
             break
